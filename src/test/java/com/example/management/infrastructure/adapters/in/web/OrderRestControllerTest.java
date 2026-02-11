@@ -1,5 +1,6 @@
 package com.example.management.infrastructure.adapters.in.web;
 
+import com.example.management.application.ports.in.*;
 import com.example.management.application.services.OrderService;
 import com.example.management.domain.model.Order;
 import com.example.management.domain.model.OrderLine;
@@ -52,6 +53,31 @@ class OrderRestControllerTest {
         @Bean
         public OrderService orderService(OrderRepositoryAdapter repositoryAdapter) {
             return new OrderService(repositoryAdapter);
+        }
+        
+        @Bean
+        public CreateOrderUseCase createOrderUseCase(OrderService orderService) {
+            return orderService;
+        }
+        
+        @Bean
+        public GetOrderUseCase getOrderUseCase(OrderService orderService) {
+            return orderService;
+        }
+        
+        @Bean
+        public ConfirmOrderUseCase confirmOrderUseCase(OrderService orderService) {
+            return orderService;
+        }
+        
+        @Bean
+        public ShipOrderUseCase shipOrderUseCase(OrderService orderService) {
+            return orderService;
+        }
+        
+        @Bean
+        public CancelOrderUseCase cancelOrderUseCase(OrderService orderService) {
+            return orderService;
         }
     }
     

@@ -25,7 +25,9 @@ public class OrderRepositoryAdapter implements OrderRepository {
     
     @Override
     public Order save(Order order) {
-        OrderEntity entity = toEntity(order);
+        OrderEntity entity = jpaRepository.findById(order.getId())
+                .map(existingEntity -> updateEntity(existingEntity, order))
+                .orElseGet(() -> toEntity(order));
         OrderEntity savedEntity = jpaRepository.save(entity);
         return toDomain(savedEntity);
     }
@@ -62,6 +64,28 @@ public class OrderRepositoryAdapter implements OrderRepository {
         
         entity.setOrderLines(lineEntities);
         return entity;
+    }
+    
+    private OrderEntity updateEntity(OrderEntity existingEntity, Order order) {
+        existingEntity.setStatus(order.getStatus());
+        existingEntity.setTotal(order.getTotal());
+        
+        // Limpiar líneas existentes y agregar las nuevas
+        existingEntity.getOrderLines().clear();
+        List<OrderLineEntity> lineEntities = order.getOrderLines().stream()
+                .map(line -> {
+                    OrderLineEntity lineEntity = new OrderLineEntity(
+                            line.getProductId(),
+                            line.getQuantity(),
+                            line.getUnitPrice()
+                    );
+                    lineEntity.setOrder(existingEntity);
+                    return lineEntity;
+                })
+                .collect(Collectors.toList());
+        
+        existingEntity.setOrderLines(lineEntities);
+        return existingEntity;
     }
     
     private Order toDomain(OrderEntity entity) {
