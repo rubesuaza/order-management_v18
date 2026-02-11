@@ -1,8 +1,7 @@
 package com.example.management.domain.exception;
 
 /**
- * Se lanza cuando una línea de pedido viola las invariantes
- * de la capa de dominio.
+ * Thrown when an order line violates domain layer invariants.
  */
 public class InvalidOrderLineException extends DomainException {
 

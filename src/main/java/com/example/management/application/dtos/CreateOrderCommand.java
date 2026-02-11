@@ -4,19 +4,14 @@ import java.util.List;
 
 /**
  * Comando de aplicación para crear un pedido.
+ * El orderId se genera internamente en el caso de uso.
  */
 public class CreateOrderCommand {
     
-    private final String orderId;
     private final List<OrderLineDto> orderLines;
     
-    public CreateOrderCommand(String orderId, List<OrderLineDto> orderLines) {
-        this.orderId = orderId;
+    public CreateOrderCommand(List<OrderLineDto> orderLines) {
         this.orderLines = orderLines;
-    }
-    
-    public String getOrderId() {
-        return orderId;
     }
     
     public List<OrderLineDto> getOrderLines() {

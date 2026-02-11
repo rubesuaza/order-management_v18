@@ -2,11 +2,10 @@ package com.example.management.infrastructure.adapters.in.web;
 
 import com.example.management.application.dtos.CreateOrderCommand;
 import com.example.management.application.dtos.OrderDto;
-import com.example.management.application.dtos.OrderLineDto as AppOrderLineDto;
 import com.example.management.application.ports.in.*;
 import com.example.management.domain.exception.DomainException;
+import com.example.management.domain.model.OrderId;
 import com.example.management.infrastructure.adapters.in.web.dto.CreateOrderRequest;
-import com.example.management.infrastructure.adapters.in.web.dto.OrderLineDto as WebOrderLineDto;
 import com.example.management.infrastructure.adapters.in.web.dto.OrderResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -14,7 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -46,12 +44,11 @@ public class OrderRestController {
     
     @PostMapping
     public ResponseEntity<OrderResponse> createOrder(@Valid @RequestBody CreateOrderRequest request) {
-        String orderId = UUID.randomUUID().toString();
-        List<AppOrderLineDto> appOrderLines = request.getOrderLines().stream()
-                .map(dto -> new AppOrderLineDto(dto.getProductId(), dto.getQuantity(), dto.getUnitPrice()))
+        List<com.example.management.application.dtos.OrderLineDto> appOrderLines = request.getOrderLines().stream()
+                .map(dto -> new com.example.management.application.dtos.OrderLineDto(dto.getProductId(), dto.getQuantity(), dto.getUnitPrice()))
                 .collect(Collectors.toList());
         
-        CreateOrderCommand command = new CreateOrderCommand(orderId, appOrderLines);
+        CreateOrderCommand command = new CreateOrderCommand(appOrderLines);
         OrderDto orderDto = createOrderUseCase.createOrder(command);
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(orderDto));
     }
@@ -66,13 +63,15 @@ public class OrderRestController {
     
     @PostMapping("/{orderId}/confirm")
     public ResponseEntity<OrderResponse> confirmOrder(@PathVariable String orderId) {
-        OrderDto orderDto = confirmOrderUseCase.confirmOrder(orderId);
+        OrderId orderIdValue = OrderId.of(orderId);
+        OrderDto orderDto = confirmOrderUseCase.confirmOrder(orderIdValue);
         return ResponseEntity.ok(toResponse(orderDto));
     }
     
     @PostMapping("/{orderId}/ship")
     public ResponseEntity<OrderResponse> shipOrder(@PathVariable String orderId) {
-        OrderDto orderDto = shipOrderUseCase.shipOrder(orderId);
+        OrderId orderIdValue = OrderId.of(orderId);
+        OrderDto orderDto = shipOrderUseCase.shipOrder(orderIdValue);
         return ResponseEntity.ok(toResponse(orderDto));
     }
     
@@ -83,8 +82,8 @@ public class OrderRestController {
     }
     
     private OrderResponse toResponse(OrderDto orderDto) {
-        List<OrderLineDto> orderLineDtos = orderDto.getOrderLines().stream()
-                .map(line -> new OrderLineDto(line.getProductId(), line.getQuantity(), line.getUnitPrice()))
+        List<com.example.management.infrastructure.adapters.in.web.dto.OrderLineDto> orderLineDtos = orderDto.getOrderLines().stream()
+                .map(line -> new com.example.management.infrastructure.adapters.in.web.dto.OrderLineDto(line.getProductId(), line.getQuantity(), line.getUnitPrice()))
                 .collect(Collectors.toList());
         
         return new OrderResponse(

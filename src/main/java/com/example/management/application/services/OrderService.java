@@ -6,13 +6,14 @@ import com.example.management.application.dtos.OrderLineDto;
 import com.example.management.application.ports.in.*;
 import com.example.management.application.ports.out.OrderRepository;
 import com.example.management.domain.model.Order;
+import com.example.management.domain.model.OrderId;
 import com.example.management.domain.model.OrderLine;
-import com.example.management.domain.service.OrderDomainService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -24,24 +25,24 @@ public class OrderService implements CreateOrderUseCase, GetOrderUseCase,
         ConfirmOrderUseCase, ShipOrderUseCase, CancelOrderUseCase {
     
     private final OrderRepository orderRepository;
-    private final OrderDomainService orderDomainService;
     
-    public OrderService(OrderRepository orderRepository, OrderDomainService orderDomainService) {
+    public OrderService(OrderRepository orderRepository) {
         this.orderRepository = orderRepository;
-        this.orderDomainService = orderDomainService;
     }
     
     @Override
     public OrderDto createOrder(CreateOrderCommand command) {
-        if (orderRepository.existsById(command.getOrderId())) {
-            throw new IllegalArgumentException("Ya existe un pedido con el identificador: " + command.getOrderId());
+        String orderId = UUID.randomUUID().toString();
+        
+        if (orderRepository.existsById(orderId)) {
+            throw new IllegalArgumentException("Ya existe un pedido con el identificador: " + orderId);
         }
         
         List<OrderLine> orderLines = command.getOrderLines().stream()
                 .map(dto -> new OrderLine(dto.getProductId(), dto.getQuantity(), dto.getUnitPrice()))
                 .collect(Collectors.toList());
         
-        Order order = Order.create(command.getOrderId(), orderLines);
+        Order order = Order.create(orderId, orderLines);
         Order savedOrder = orderRepository.save(order);
         return toDto(savedOrder);
     }
@@ -54,21 +55,21 @@ public class OrderService implements CreateOrderUseCase, GetOrderUseCase,
     }
     
     @Override
-    public OrderDto confirmOrder(String orderId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new IllegalArgumentException("Pedido no encontrado: " + orderId));
+    public OrderDto confirmOrder(OrderId orderId) {
+        Order order = orderRepository.findById(orderId.getValue())
+                .orElseThrow(() -> new IllegalArgumentException("Pedido no encontrado: " + orderId.getValue()));
         
-        orderDomainService.confirmOrder(order);
+        order.confirm();
         Order savedOrder = orderRepository.save(order);
         return toDto(savedOrder);
     }
     
     @Override
-    public OrderDto shipOrder(String orderId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new IllegalArgumentException("Pedido no encontrado: " + orderId));
+    public OrderDto shipOrder(OrderId orderId) {
+        Order order = orderRepository.findById(orderId.getValue())
+                .orElseThrow(() -> new IllegalArgumentException("Pedido no encontrado: " + orderId.getValue()));
         
-        orderDomainService.shipOrder(order);
+        order.ship();
         Order savedOrder = orderRepository.save(order);
         return toDto(savedOrder);
     }
@@ -78,7 +79,7 @@ public class OrderService implements CreateOrderUseCase, GetOrderUseCase,
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("Pedido no encontrado: " + orderId));
         
-        orderDomainService.cancelOrder(order);
+        order.cancel();
         Order savedOrder = orderRepository.save(order);
         return toDto(savedOrder);
     }
