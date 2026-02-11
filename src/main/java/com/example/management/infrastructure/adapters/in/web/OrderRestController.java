@@ -64,19 +64,22 @@ public class OrderRestController {
     
     @PostMapping("/{orderId}/confirm")
     public ResponseEntity<OrderResponse> confirmOrder(@PathVariable String orderId) {
-        OrderDto orderDto = confirmOrderUseCase.confirmOrder(orderId);
+        OrderId orderIdValue = OrderId.of(orderId);
+        OrderDto orderDto = confirmOrderUseCase.confirmOrder(orderIdValue);
         return ResponseEntity.ok(toResponse(orderDto));
     }
     
     @PostMapping("/{orderId}/ship")
     public ResponseEntity<OrderResponse> shipOrder(@PathVariable String orderId) {
-        OrderDto orderDto = shipOrderUseCase.shipOrder(orderId);
+        OrderId orderIdValue = OrderId.of(orderId);
+        OrderDto orderDto = shipOrderUseCase.shipOrder(orderIdValue);
         return ResponseEntity.ok(toResponse(orderDto));
     }
     
     @PostMapping("/{orderId}/cancel")
     public ResponseEntity<OrderResponse> cancelOrder(@PathVariable String orderId) {
-        OrderDto orderDto = cancelOrderUseCase.cancelOrder(orderId);
+        OrderId orderIdValue = OrderId.of(orderId);
+        OrderDto orderDto = cancelOrderUseCase.cancelOrder(orderIdValue);
         return ResponseEntity.ok(toResponse(orderDto));
     }
     

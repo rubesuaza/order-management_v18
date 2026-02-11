@@ -30,14 +30,14 @@ class OrderTest {
     }
 
     @Test
-    @DisplayName("Un pedido debe tener al menos una línea")
+    @DisplayName("An order must have at least one line")
     void orderMustHaveAtLeastOneLine() {
         assertThrows(OrderValidationException.class,
                 () -> Order.create("ORDER-1", List.of()));
     }
 
     @Test
-    @DisplayName("El identificador de pedido no puede ser nulo ni vacío")
+    @DisplayName("Order identifier cannot be null or empty")
     void orderIdMustNotBeBlank() {
         OrderLine line = new OrderLine("PRODUCT-1", 1, new BigDecimal("10.00"));
 
@@ -49,7 +49,7 @@ class OrderTest {
     }
 
     @Test
-    @DisplayName("No se permiten líneas nulas en el pedido")
+    @DisplayName("Null lines are not allowed in the order")
     void orderMustNotContainNullLines() {
         OrderLine line = new OrderLine("PRODUCT-1", 1, new BigDecimal("10.00"));
 
@@ -58,7 +58,7 @@ class OrderTest {
     }
 
     @Test
-    @DisplayName("Solo se puede confirmar un pedido en estado CREATED")
+    @DisplayName("An order can only be confirmed when in CREATED state")
     void confirmOnlyFromCreated() {
         OrderLine line = new OrderLine("PRODUCT-1", 1, new BigDecimal("10.00"));
         Order order = Order.create("ORDER-1", List.of(line));
@@ -70,7 +70,7 @@ class OrderTest {
     }
 
     @Test
-    @DisplayName("Solo se puede enviar un pedido en estado CONFIRMED")
+    @DisplayName("An order can only be shipped when in CONFIRMED state")
     void shipOnlyFromConfirmed() {
         OrderLine line = new OrderLine("PRODUCT-1", 1, new BigDecimal("10.00"));
         Order order = Order.create("ORDER-1", List.of(line));
@@ -83,7 +83,7 @@ class OrderTest {
     }
 
     @Test
-    @DisplayName("No se puede cancelar un pedido en estado SHIPPED")
+    @DisplayName("An order in SHIPPED state cannot be cancelled")
     void cannotCancelShippedOrder() {
         OrderLine line = new OrderLine("PRODUCT-1", 1, new BigDecimal("10.00"));
         Order order = Order.create("ORDER-1", List.of(line));
@@ -95,7 +95,7 @@ class OrderTest {
     }
 
     @Test
-    @DisplayName("Se puede cancelar un pedido en estado CREATED o CONFIRMED")
+    @DisplayName("An order can be cancelled when in CREATED or CONFIRMED state")
     void canCancelFromCreatedOrConfirmed() {
         OrderLine line = new OrderLine("PRODUCT-1", 1, new BigDecimal("10.00"));
 
@@ -110,7 +110,7 @@ class OrderTest {
     }
 
     @Test
-    @DisplayName("El total nunca es negativo")
+    @DisplayName("Total is never negative")
     void totalIsNeverNegative() {
         OrderLine line = new OrderLine("PRODUCT-1", 1, new BigDecimal("0.00"));
         Order order = Order.create("ORDER-1", List.of(line));
