@@ -13,12 +13,12 @@ public class OrderResponse {
     private String id;
     private String status;
     private BigDecimal total;
-    private List<OrderLineDto> orderLines;
+    private List<WebOrderLineDto> orderLines;
     
     public OrderResponse() {
     }
     
-    public OrderResponse(String id, String status, BigDecimal total, List<OrderLineDto> orderLines) {
+    public OrderResponse(String id, String status, BigDecimal total, List<WebOrderLineDto> orderLines) {
         this.id = id;
         this.status = status;
         this.total = total;
@@ -37,7 +37,7 @@ public class OrderResponse {
         return total;
     }
     
-    public List<OrderLineDto> getOrderLines() {
+    public List<WebOrderLineDto> getOrderLines() {
         return orderLines;
     }
 }

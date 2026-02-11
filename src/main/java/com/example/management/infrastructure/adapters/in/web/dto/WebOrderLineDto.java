@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 /**
  * DTO para representar una línea de pedido en las peticiones HTTP.
  */
-public class OrderLineDto {
+public class WebOrderLineDto {
     
     @NotBlank(message = "El identificador de producto es obligatorio")
     private String productId;
@@ -23,10 +23,10 @@ public class OrderLineDto {
     @Min(value = 0, message = "El precio unitario no puede ser negativo")
     private BigDecimal unitPrice;
     
-    public OrderLineDto() {
+    public WebOrderLineDto() {
     }
     
-    public OrderLineDto(String productId, Integer quantity, BigDecimal unitPrice) {
+    public WebOrderLineDto(String productId, Integer quantity, BigDecimal unitPrice) {
         this.productId = productId;
         this.quantity = quantity;
         this.unitPrice = unitPrice;

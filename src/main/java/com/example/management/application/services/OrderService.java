@@ -32,32 +32,33 @@ public class OrderService implements CreateOrderUseCase, GetOrderUseCase,
     
     @Override
     public OrderDto createOrder(CreateOrderCommand command) {
-        String orderId = UUID.randomUUID().toString();
+        OrderId orderId = OrderId.of(UUID.randomUUID().toString());
         
-        if (orderRepository.existsById(orderId)) {
-            throw new IllegalArgumentException("Ya existe un pedido con el identificador: " + orderId);
+        if (orderRepository.existsById(orderId.getValue())) {
+            throw new IllegalArgumentException("Ya existe un pedido con el identificador: " + orderId.getValue());
         }
         
         List<OrderLine> orderLines = command.getOrderLines().stream()
                 .map(dto -> new OrderLine(dto.getProductId(), dto.getQuantity(), dto.getUnitPrice()))
                 .collect(Collectors.toList());
         
-        Order order = Order.create(orderId, orderLines);
+        Order order = Order.create(orderId.getValue(), orderLines);
         Order savedOrder = orderRepository.save(order);
         return toDto(savedOrder);
     }
     
     @Override
     @Transactional(readOnly = true)
-    public Optional<OrderDto> getOrder(String orderId) {
-        return orderRepository.findById(orderId)
+    public Optional<OrderDto> getOrder(OrderId orderId) {
+        return orderRepository.findById(orderId.getValue())
                 .map(this::toDto);
     }
     
     @Override
-    public OrderDto confirmOrder(OrderId orderId) {
-        Order order = orderRepository.findById(orderId.getValue())
-                .orElseThrow(() -> new IllegalArgumentException("Pedido no encontrado: " + orderId.getValue()));
+    public OrderDto confirmOrder(String orderId) {
+        OrderId orderIdValue = OrderId.of(orderId);
+        Order order = orderRepository.findById(orderIdValue.getValue())
+                .orElseThrow(() -> new IllegalArgumentException("Pedido no encontrado: " + orderIdValue.getValue()));
         
         order.confirm();
         Order savedOrder = orderRepository.save(order);
@@ -65,9 +66,10 @@ public class OrderService implements CreateOrderUseCase, GetOrderUseCase,
     }
     
     @Override
-    public OrderDto shipOrder(OrderId orderId) {
-        Order order = orderRepository.findById(orderId.getValue())
-                .orElseThrow(() -> new IllegalArgumentException("Pedido no encontrado: " + orderId.getValue()));
+    public OrderDto shipOrder(String orderId) {
+        OrderId orderIdValue = OrderId.of(orderId);
+        Order order = orderRepository.findById(orderIdValue.getValue())
+                .orElseThrow(() -> new IllegalArgumentException("Pedido no encontrado: " + orderIdValue.getValue()));
         
         order.ship();
         Order savedOrder = orderRepository.save(order);
@@ -76,8 +78,9 @@ public class OrderService implements CreateOrderUseCase, GetOrderUseCase,
     
     @Override
     public OrderDto cancelOrder(String orderId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new IllegalArgumentException("Pedido no encontrado: " + orderId));
+        OrderId orderIdValue = OrderId.of(orderId);
+        Order order = orderRepository.findById(orderIdValue.getValue())
+                .orElseThrow(() -> new IllegalArgumentException("Pedido no encontrado: " + orderIdValue.getValue()));
         
         order.cancel();
         Order savedOrder = orderRepository.save(order);

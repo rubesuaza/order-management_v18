@@ -12,20 +12,20 @@ public class CreateOrderRequest {
     
     @NotEmpty(message = "El pedido debe tener al menos una línea")
     @Valid
-    private List<OrderLineDto> orderLines;
+    private List<WebOrderLineDto> orderLines;
     
     public CreateOrderRequest() {
     }
     
-    public CreateOrderRequest(List<OrderLineDto> orderLines) {
+    public CreateOrderRequest(List<WebOrderLineDto> orderLines) {
         this.orderLines = orderLines;
     }
     
-    public List<OrderLineDto> getOrderLines() {
+    public List<WebOrderLineDto> getOrderLines() {
         return orderLines;
     }
     
-    public void setOrderLines(List<OrderLineDto> orderLines) {
+    public void setOrderLines(List<WebOrderLineDto> orderLines) {
         this.orderLines = orderLines;
     }
 }

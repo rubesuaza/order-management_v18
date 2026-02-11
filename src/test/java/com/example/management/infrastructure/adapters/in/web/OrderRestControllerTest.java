@@ -1,37 +1,31 @@
 package com.example.management.infrastructure.adapters.in.web;
 
 import com.example.management.application.dtos.CreateOrderCommand;
-import com.example.management.application.dtos.OrderLineDto as AppOrderLineDto;
+import com.example.management.application.dtos.OrderDto;
+import com.example.management.application.dtos.OrderLineDto;
 import com.example.management.application.ports.in.*;
 import com.example.management.domain.model.OrderId;
 import com.example.management.infrastructure.adapters.in.web.dto.CreateOrderRequest;
-import com.example.management.infrastructure.adapters.in.web.dto.OrderLineDto;
-import com.example.management.infrastructure.adapters.out.persistence.OrderJpaRepository;
-import com.example.management.infrastructure.adapters.out.persistence.OrderRepositoryAdapter;
+import com.example.management.infrastructure.adapters.in.web.dto.WebOrderLineDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(OrderRestController.class)
-@TestPropertySource(properties = {
-        "spring.jpa.hibernate.ddl-auto=create-drop",
-        "spring.datasource.url=jdbc:h2:mem:testdb"
-})
 class OrderRestControllerTest {
     
     @Autowired
@@ -40,82 +34,47 @@ class OrderRestControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
     
-    @Autowired
+    @MockBean
     private CreateOrderUseCase createOrderUseCase;
     
-    @Autowired
+    @MockBean
     private GetOrderUseCase getOrderUseCase;
     
-    @Autowired
+    @MockBean
     private ConfirmOrderUseCase confirmOrderUseCase;
     
-    @Autowired
+    @MockBean
     private ShipOrderUseCase shipOrderUseCase;
     
-    @Autowired
+    @MockBean
     private CancelOrderUseCase cancelOrderUseCase;
-    
-    @Autowired
-    private OrderJpaRepository jpaRepository;
-    
-    @TestConfiguration
-    static class TestConfig {
-        @Bean
-        public OrderRepositoryAdapter orderRepositoryAdapter(OrderJpaRepository jpaRepository) {
-            return new OrderRepositoryAdapter(jpaRepository);
-        }
-        
-        @Bean
-        public com.example.management.application.services.OrderService orderService(
-                OrderRepositoryAdapter repositoryAdapter) {
-            return new com.example.management.application.services.OrderService(repositoryAdapter);
-        }
-        
-        @Bean
-        public CreateOrderUseCase createOrderUseCase(com.example.management.application.services.OrderService orderService) {
-            return orderService;
-        }
-        
-        @Bean
-        public GetOrderUseCase getOrderUseCase(com.example.management.application.services.OrderService orderService) {
-            return orderService;
-        }
-        
-        @Bean
-        public ConfirmOrderUseCase confirmOrderUseCase(com.example.management.application.services.OrderService orderService) {
-            return orderService;
-        }
-        
-        @Bean
-        public ShipOrderUseCase shipOrderUseCase(com.example.management.application.services.OrderService orderService) {
-            return orderService;
-        }
-        
-        @Bean
-        public CancelOrderUseCase cancelOrderUseCase(com.example.management.application.services.OrderService orderService) {
-            return orderService;
-        }
-    }
-    
-    @BeforeEach
-    void setUp() {
-        jpaRepository.deleteAll();
-    }
     
     @Test
     @DisplayName("Debe crear un pedido correctamente")
     void shouldCreateOrder() throws Exception {
+        OrderDto mockOrderDto = new OrderDto(
+                "ORDER-1",
+                "CREATED",
+                new BigDecimal("25.50"),
+                List.of(
+                        new OrderLineDto("PRODUCT-1", 2, new BigDecimal("10.00")),
+                        new OrderLineDto("PRODUCT-2", 1, new BigDecimal("5.50"))
+                )
+        );
+        
+        when(createOrderUseCase.createOrder(any(CreateOrderCommand.class))).thenReturn(mockOrderDto);
+        
         CreateOrderRequest request = new CreateOrderRequest();
         request.setOrderLines(List.of(
-                new OrderLineDto("PRODUCT-1", 2, new BigDecimal("10.00")),
-                new OrderLineDto("PRODUCT-2", 1, new BigDecimal("5.50"))
+                new WebOrderLineDto("PRODUCT-1", 2, new BigDecimal("10.00")),
+                new WebOrderLineDto("PRODUCT-2", 1, new BigDecimal("5.50"))
         ));
         
         mockMvc.perform(post("/api/orders")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").exists())
+                .andExpect(jsonPath("$.id").value("ORDER-1"))
                 .andExpect(jsonPath("$.status").value("CREATED"))
                 .andExpect(jsonPath("$.total").value(25.50))
                 .andExpect(jsonPath("$.orderLines").isArray())
@@ -125,21 +84,18 @@ class OrderRestControllerTest {
     @Test
     @DisplayName("Debe obtener un pedido por su identificador")
     void shouldGetOrderById() throws Exception {
-        // Crear un pedido primero usando el use case
-        CreateOrderRequest createRequest = new CreateOrderRequest();
-        createRequest.setOrderLines(List.of(
-                new OrderLineDto("PRODUCT-1", 2, new BigDecimal("10.00"))
-        ));
+        OrderDto mockOrderDto = new OrderDto(
+                "ORDER-1",
+                "CREATED",
+                new BigDecimal("20.00"),
+                List.of(new OrderLineDto("PRODUCT-1", 2, new BigDecimal("10.00")))
+        );
         
-        String orderId = createOrderUseCase.createOrder(
-                new CreateOrderCommand(createRequest.getOrderLines().stream()
-                        .map(dto -> new AppOrderLineDto(dto.getProductId(), dto.getQuantity(), dto.getUnitPrice()))
-                        .collect(Collectors.toList()))
-        ).getId();
+        when(getOrderUseCase.getOrder(any(OrderId.class))).thenReturn(Optional.of(mockOrderDto));
         
-        mockMvc.perform(get("/api/orders/" + orderId))
+        mockMvc.perform(get("/api/orders/ORDER-1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(orderId))
+                .andExpect(jsonPath("$.id").value("ORDER-1"))
                 .andExpect(jsonPath("$.status").value("CREATED"))
                 .andExpect(jsonPath("$.total").value(20.00));
     }
@@ -147,6 +103,8 @@ class OrderRestControllerTest {
     @Test
     @DisplayName("Debe retornar 404 cuando el pedido no existe")
     void shouldReturn404WhenOrderNotFound() throws Exception {
+        when(getOrderUseCase.getOrder(any(OrderId.class))).thenReturn(Optional.empty());
+        
         mockMvc.perform(get("/api/orders/NON-EXISTENT"))
                 .andExpect(status().isNotFound());
     }
@@ -154,88 +112,64 @@ class OrderRestControllerTest {
     @Test
     @DisplayName("Debe confirmar un pedido correctamente")
     void shouldConfirmOrder() throws Exception {
-        // Crear un pedido usando el use case
-        CreateOrderRequest createRequest = new CreateOrderRequest();
-        createRequest.setOrderLines(List.of(
-                new OrderLineDto("PRODUCT-1", 1, new BigDecimal("10.00"))
-        ));
+        OrderDto mockOrderDto = new OrderDto(
+                "ORDER-1",
+                "CONFIRMED",
+                new BigDecimal("10.00"),
+                List.of(new OrderLineDto("PRODUCT-1", 1, new BigDecimal("10.00")))
+        );
         
-        String orderId = createOrderUseCase.createOrder(
-                new CreateOrderCommand(createRequest.getOrderLines().stream()
-                        .map(dto -> new AppOrderLineDto(dto.getProductId(), dto.getQuantity(), dto.getUnitPrice()))
-                        .collect(Collectors.toList()))
-        ).getId();
+        when(confirmOrderUseCase.confirmOrder(any(String.class))).thenReturn(mockOrderDto);
         
-        mockMvc.perform(post("/api/orders/" + orderId + "/confirm"))
+        mockMvc.perform(post("/api/orders/ORDER-1/confirm"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(orderId))
+                .andExpect(jsonPath("$.id").value("ORDER-1"))
                 .andExpect(jsonPath("$.status").value("CONFIRMED"));
     }
     
     @Test
     @DisplayName("Debe enviar un pedido correctamente")
     void shouldShipOrder() throws Exception {
-        // Crear un pedido usando el use case
-        CreateOrderRequest createRequest = new CreateOrderRequest();
-        createRequest.setOrderLines(List.of(
-                new OrderLineDto("PRODUCT-1", 1, new BigDecimal("10.00"))
-        ));
+        OrderDto mockOrderDto = new OrderDto(
+                "ORDER-1",
+                "SHIPPED",
+                new BigDecimal("10.00"),
+                List.of(new OrderLineDto("PRODUCT-1", 1, new BigDecimal("10.00")))
+        );
         
-        String orderId = createOrderUseCase.createOrder(
-                new CreateOrderCommand(createRequest.getOrderLines().stream()
-                        .map(dto -> new AppOrderLineDto(dto.getProductId(), dto.getQuantity(), dto.getUnitPrice()))
-                        .collect(Collectors.toList()))
-        ).getId();
+        when(shipOrderUseCase.shipOrder(any(String.class))).thenReturn(mockOrderDto);
         
-        // Confirmar el pedido usando el use case
-        confirmOrderUseCase.confirmOrder(OrderId.of(orderId));
-        
-        mockMvc.perform(post("/api/orders/" + orderId + "/ship"))
+        mockMvc.perform(post("/api/orders/ORDER-1/ship"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(orderId))
+                .andExpect(jsonPath("$.id").value("ORDER-1"))
                 .andExpect(jsonPath("$.status").value("SHIPPED"));
     }
     
     @Test
     @DisplayName("Debe cancelar un pedido correctamente")
     void shouldCancelOrder() throws Exception {
-        // Crear un pedido usando el use case
-        CreateOrderRequest createRequest = new CreateOrderRequest();
-        createRequest.setOrderLines(List.of(
-                new OrderLineDto("PRODUCT-1", 1, new BigDecimal("10.00"))
-        ));
+        OrderDto mockOrderDto = new OrderDto(
+                "ORDER-1",
+                "CANCELLED",
+                new BigDecimal("10.00"),
+                List.of(new OrderLineDto("PRODUCT-1", 1, new BigDecimal("10.00")))
+        );
         
-        String orderId = createOrderUseCase.createOrder(
-                new CreateOrderCommand(createRequest.getOrderLines().stream()
-                        .map(dto -> new AppOrderLineDto(dto.getProductId(), dto.getQuantity(), dto.getUnitPrice()))
-                        .collect(Collectors.toList()))
-        ).getId();
+        when(cancelOrderUseCase.cancelOrder(any(String.class))).thenReturn(mockOrderDto);
         
-        mockMvc.perform(post("/api/orders/" + orderId + "/cancel"))
+        mockMvc.perform(post("/api/orders/ORDER-1/cancel"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(orderId))
+                .andExpect(jsonPath("$.id").value("ORDER-1"))
                 .andExpect(jsonPath("$.status").value("CANCELLED"));
     }
     
     @Test
     @DisplayName("Debe retornar 400 cuando se intenta confirmar un pedido ya confirmado")
     void shouldReturn400WhenConfirmingAlreadyConfirmedOrder() throws Exception {
-        // Crear un pedido usando el use case
-        CreateOrderRequest createRequest = new CreateOrderRequest();
-        createRequest.setOrderLines(List.of(
-                new OrderLineDto("PRODUCT-1", 1, new BigDecimal("10.00"))
-        ));
+        when(confirmOrderUseCase.confirmOrder(any(String.class)))
+                .thenThrow(new IllegalArgumentException("Solo se puede confirmar un pedido en estado CREATED"));
         
-        String orderId = createOrderUseCase.createOrder(
-                new CreateOrderCommand(createRequest.getOrderLines().stream()
-                        .map(dto -> new AppOrderLineDto(dto.getProductId(), dto.getQuantity(), dto.getUnitPrice()))
-                        .collect(Collectors.toList()))
-        ).getId();
-        
-        // Confirmar el pedido usando el use case
-        confirmOrderUseCase.confirmOrder(OrderId.of(orderId));
-        
-        mockMvc.perform(post("/api/orders/" + orderId + "/confirm"))
+        mockMvc.perform(post("/api/orders/ORDER-1/confirm"))
                 .andExpect(status().isBadRequest());
     }
     

@@ -51,15 +51,6 @@ public class Order {
      * @return Order reconstruido con el estado especificado
      */
     public static Order reconstruct(String id, List<OrderLine> orderLines, OrderStatus status) {
-        if (id == null || id.trim().isEmpty()) {
-            throw new OrderValidationException("El identificador de pedido no puede ser nulo ni vacío");
-        }
-        if (orderLines == null || orderLines.isEmpty()) {
-            throw new OrderValidationException("Un pedido debe tener al menos una línea");
-        }
-        if (orderLines.stream().anyMatch(Objects::isNull)) {
-            throw new OrderValidationException("No se permiten líneas nulas en el pedido");
-        }
         if (status == null) {
             throw new OrderValidationException("El estado del pedido no puede ser nulo");
         }

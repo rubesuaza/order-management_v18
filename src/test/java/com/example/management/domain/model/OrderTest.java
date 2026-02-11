@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class OrderTest {
 
     @Test
-    @DisplayName("Un pedido válido se crea en estado CREATED y con total correcto")
+    @DisplayName("A valid order is created in CREATED state and with correct total")
     void validOrderIsCreatedWithCorrectTotal() {
         OrderLine line1 = new OrderLine("PRODUCT-1", 2, new BigDecimal("10.00"));
         OrderLine line2 = new OrderLine("PRODUCT-2", 1, new BigDecimal("5.50"));

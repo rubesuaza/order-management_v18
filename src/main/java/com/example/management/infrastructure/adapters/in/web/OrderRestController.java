@@ -55,7 +55,8 @@ public class OrderRestController {
     
     @GetMapping("/{orderId}")
     public ResponseEntity<OrderResponse> getOrder(@PathVariable String orderId) {
-        return getOrderUseCase.getOrder(orderId)
+        OrderId orderIdValue = OrderId.of(orderId);
+        return getOrderUseCase.getOrder(orderIdValue)
                 .map(this::toResponse)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -63,15 +64,13 @@ public class OrderRestController {
     
     @PostMapping("/{orderId}/confirm")
     public ResponseEntity<OrderResponse> confirmOrder(@PathVariable String orderId) {
-        OrderId orderIdValue = OrderId.of(orderId);
-        OrderDto orderDto = confirmOrderUseCase.confirmOrder(orderIdValue);
+        OrderDto orderDto = confirmOrderUseCase.confirmOrder(orderId);
         return ResponseEntity.ok(toResponse(orderDto));
     }
     
     @PostMapping("/{orderId}/ship")
     public ResponseEntity<OrderResponse> shipOrder(@PathVariable String orderId) {
-        OrderId orderIdValue = OrderId.of(orderId);
-        OrderDto orderDto = shipOrderUseCase.shipOrder(orderIdValue);
+        OrderDto orderDto = shipOrderUseCase.shipOrder(orderId);
         return ResponseEntity.ok(toResponse(orderDto));
     }
     
@@ -82,8 +81,8 @@ public class OrderRestController {
     }
     
     private OrderResponse toResponse(OrderDto orderDto) {
-        List<com.example.management.infrastructure.adapters.in.web.dto.OrderLineDto> orderLineDtos = orderDto.getOrderLines().stream()
-                .map(line -> new com.example.management.infrastructure.adapters.in.web.dto.OrderLineDto(line.getProductId(), line.getQuantity(), line.getUnitPrice()))
+        List<com.example.management.infrastructure.adapters.in.web.dto.WebOrderLineDto> orderLineDtos = orderDto.getOrderLines().stream()
+                .map(line -> new com.example.management.infrastructure.adapters.in.web.dto.WebOrderLineDto(line.getProductId(), line.getQuantity(), line.getUnitPrice()))
                 .collect(Collectors.toList());
         
         return new OrderResponse(
