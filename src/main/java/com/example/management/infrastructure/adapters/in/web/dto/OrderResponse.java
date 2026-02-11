@@ -49,31 +49,15 @@ public class OrderResponse {
         return id;
     }
     
-    public void setId(String id) {
-        this.id = id;
-    }
-    
     public String getStatus() {
         return status;
-    }
-    
-    public void setStatus(String status) {
-        this.status = status;
     }
     
     public BigDecimal getTotal() {
         return total;
     }
     
-    public void setTotal(BigDecimal total) {
-        this.total = total;
-    }
-    
     public List<OrderLineDto> getOrderLines() {
         return orderLines;
-    }
-    
-    public void setOrderLines(List<OrderLineDto> orderLines) {
-        this.orderLines = orderLines;
     }
 }

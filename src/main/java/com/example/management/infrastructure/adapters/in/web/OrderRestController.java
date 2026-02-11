@@ -1,11 +1,12 @@
 package com.example.management.infrastructure.adapters.in.web;
 
+import com.example.management.application.dtos.CreateOrderCommand;
+import com.example.management.application.dtos.OrderDto;
+import com.example.management.application.dtos.OrderLineDto as AppOrderLineDto;
 import com.example.management.application.ports.in.*;
 import com.example.management.domain.exception.DomainException;
-import com.example.management.domain.model.Order;
-import com.example.management.domain.model.OrderLine;
 import com.example.management.infrastructure.adapters.in.web.dto.CreateOrderRequest;
-import com.example.management.infrastructure.adapters.in.web.dto.OrderLineDto;
+import com.example.management.infrastructure.adapters.in.web.dto.OrderLineDto as WebOrderLineDto;
 import com.example.management.infrastructure.adapters.in.web.dto.OrderResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -46,58 +47,56 @@ public class OrderRestController {
     @PostMapping
     public ResponseEntity<OrderResponse> createOrder(@Valid @RequestBody CreateOrderRequest request) {
         String orderId = UUID.randomUUID().toString();
-        List<OrderLine> orderLines = request.getOrderLines().stream()
-                .map(dto -> new OrderLine(dto.getProductId(), dto.getQuantity(), dto.getUnitPrice()))
+        List<AppOrderLineDto> appOrderLines = request.getOrderLines().stream()
+                .map(dto -> new AppOrderLineDto(dto.getProductId(), dto.getQuantity(), dto.getUnitPrice()))
                 .collect(Collectors.toList());
         
-        Order order = createOrderUseCase.createOrder(orderId, orderLines);
-        return ResponseEntity.status(HttpStatus.CREATED).body(OrderResponse.fromDomain(order));
+        CreateOrderCommand command = new CreateOrderCommand(orderId, appOrderLines);
+        OrderDto orderDto = createOrderUseCase.createOrder(command);
+        return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(orderDto));
     }
     
     @GetMapping("/{orderId}")
     public ResponseEntity<OrderResponse> getOrder(@PathVariable String orderId) {
         return getOrderUseCase.getOrder(orderId)
-                .map(order -> ResponseEntity.ok(OrderResponse.fromDomain(order)))
+                .map(this::toResponse)
+                .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
     
     @PostMapping("/{orderId}/confirm")
     public ResponseEntity<OrderResponse> confirmOrder(@PathVariable String orderId) {
-        try {
-            Order order = confirmOrderUseCase.confirmOrder(orderId);
-            return ResponseEntity.ok(OrderResponse.fromDomain(order));
-        } catch (DomainException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
+        OrderDto orderDto = confirmOrderUseCase.confirmOrder(orderId);
+        return ResponseEntity.ok(toResponse(orderDto));
     }
     
     @PostMapping("/{orderId}/ship")
     public ResponseEntity<OrderResponse> shipOrder(@PathVariable String orderId) {
-        try {
-            Order order = shipOrderUseCase.shipOrder(orderId);
-            return ResponseEntity.ok(OrderResponse.fromDomain(order));
-        } catch (DomainException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
+        OrderDto orderDto = shipOrderUseCase.shipOrder(orderId);
+        return ResponseEntity.ok(toResponse(orderDto));
     }
     
     @PostMapping("/{orderId}/cancel")
     public ResponseEntity<OrderResponse> cancelOrder(@PathVariable String orderId) {
-        try {
-            Order order = cancelOrderUseCase.cancelOrder(orderId);
-            return ResponseEntity.ok(OrderResponse.fromDomain(order));
-        } catch (DomainException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
+        OrderDto orderDto = cancelOrderUseCase.cancelOrder(orderId);
+        return ResponseEntity.ok(toResponse(orderDto));
     }
     
-    @ExceptionHandler(DomainException.class)
-    public ResponseEntity<String> handleDomainException(DomainException e) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+    private OrderResponse toResponse(OrderDto orderDto) {
+        List<OrderLineDto> orderLineDtos = orderDto.getOrderLines().stream()
+                .map(line -> new OrderLineDto(line.getProductId(), line.getQuantity(), line.getUnitPrice()))
+                .collect(Collectors.toList());
+        
+        return new OrderResponse(
+                orderDto.getId(),
+                orderDto.getStatus(),
+                orderDto.getTotal(),
+                orderLineDtos
+        );
     }
     
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException e) {
+    @ExceptionHandler({DomainException.class, IllegalArgumentException.class})
+    public ResponseEntity<String> handleBadRequestException(Exception e) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
     }
 }

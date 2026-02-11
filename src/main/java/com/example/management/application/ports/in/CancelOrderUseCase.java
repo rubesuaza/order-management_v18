@@ -1,6 +1,6 @@
 package com.example.management.application.ports.in;
 
-import com.example.management.domain.model.Order;
+import com.example.management.application.dtos.OrderDto;
 
 /**
  * Caso de uso para cancelar un pedido.
@@ -14,5 +14,5 @@ public interface CancelOrderUseCase {
      * @return El pedido cancelado
      * @throws com.example.management.domain.exception.InvalidOrderStateException si el pedido está en estado SHIPPED
      */
-    Order cancelOrder(String orderId);
+    OrderDto cancelOrder(String orderId);
 }

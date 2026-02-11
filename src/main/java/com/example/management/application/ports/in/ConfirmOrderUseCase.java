@@ -1,6 +1,6 @@
 package com.example.management.application.ports.in;
 
-import com.example.management.domain.model.Order;
+import com.example.management.application.dtos.OrderDto;
 
 /**
  * Caso de uso para confirmar un pedido.
@@ -14,5 +14,5 @@ public interface ConfirmOrderUseCase {
      * @return El pedido confirmado
      * @throws com.example.management.domain.exception.InvalidOrderStateException si el pedido no está en estado CREATED
      */
-    Order confirmOrder(String orderId);
+    OrderDto confirmOrder(String orderId);
 }

@@ -1,9 +1,7 @@
 package com.example.management.application.ports.in;
 
-import com.example.management.domain.model.Order;
-import com.example.management.domain.model.OrderLine;
-
-import java.util.List;
+import com.example.management.application.dtos.CreateOrderCommand;
+import com.example.management.application.dtos.OrderDto;
 
 /**
  * Caso de uso para crear un nuevo pedido.
@@ -13,9 +11,8 @@ public interface CreateOrderUseCase {
     /**
      * Crea un nuevo pedido.
      * 
-     * @param orderId Identificador único del pedido
-     * @param orderLines Líneas del pedido
+     * @param command Comando con los datos del pedido a crear
      * @return El pedido creado
      */
-    Order createOrder(String orderId, List<OrderLine> orderLines);
+    OrderDto createOrder(CreateOrderCommand command);
 }

@@ -40,6 +40,35 @@ public class Order {
         return new Order(id, orderLines);
     }
     
+    /**
+     * Reconstruye un Order desde persistencia con un estado específico.
+     * Este método permite reconstruir el agregado sin ejecutar transiciones de estado,
+     * usado por adaptadores de persistencia para restaurar el estado exacto guardado.
+     * 
+     * @param id Identificador del pedido
+     * @param orderLines Líneas del pedido
+     * @param status Estado del pedido
+     * @return Order reconstruido con el estado especificado
+     */
+    public static Order reconstruct(String id, List<OrderLine> orderLines, OrderStatus status) {
+        if (id == null || id.trim().isEmpty()) {
+            throw new OrderValidationException("El identificador de pedido no puede ser nulo ni vacío");
+        }
+        if (orderLines == null || orderLines.isEmpty()) {
+            throw new OrderValidationException("Un pedido debe tener al menos una línea");
+        }
+        if (orderLines.stream().anyMatch(Objects::isNull)) {
+            throw new OrderValidationException("No se permiten líneas nulas en el pedido");
+        }
+        if (status == null) {
+            throw new OrderValidationException("El estado del pedido no puede ser nulo");
+        }
+        
+        Order order = new Order(id, orderLines);
+        order.status = status; // Asignación directa sin validación de transición
+        return order;
+    }
+    
     public void confirm() {
         if (this.status != OrderStatus.CREATED) {
             throw new InvalidOrderStateException("Solo se puede confirmar un pedido en estado CREATED");

@@ -16,9 +16,8 @@ public class OrderEntity {
     @Id
     private String id;
     
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private com.example.management.domain.model.OrderStatus status;
+    private String status;
     
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal total;
@@ -33,7 +32,7 @@ public class OrderEntity {
         // Requerido por JPA
     }
     
-    public OrderEntity(String id, com.example.management.domain.model.OrderStatus status, BigDecimal total) {
+    public OrderEntity(String id, String status, BigDecimal total) {
         this.id = id;
         this.status = status;
         this.total = total;
@@ -47,11 +46,11 @@ public class OrderEntity {
         this.id = id;
     }
     
-    public com.example.management.domain.model.OrderStatus getStatus() {
+    public String getStatus() {
         return status;
     }
     
-    public void setStatus(com.example.management.domain.model.OrderStatus status) {
+    public void setStatus(String status) {
         this.status = status;
     }
     

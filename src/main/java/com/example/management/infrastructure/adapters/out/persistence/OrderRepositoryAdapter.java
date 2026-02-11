@@ -46,7 +46,7 @@ public class OrderRepositoryAdapter implements OrderRepository {
     private OrderEntity toEntity(Order order) {
         OrderEntity entity = new OrderEntity(
                 order.getId(),
-                order.getStatus(),
+                order.getStatus().name(),
                 order.getTotal()
         );
         
@@ -67,7 +67,7 @@ public class OrderRepositoryAdapter implements OrderRepository {
     }
     
     private OrderEntity updateEntity(OrderEntity existingEntity, Order order) {
-        existingEntity.setStatus(order.getStatus());
+        existingEntity.setStatus(order.getStatus().name());
         existingEntity.setTotal(order.getTotal());
         
         // Limpiar líneas existentes y agregar las nuevas
@@ -97,31 +97,8 @@ public class OrderRepositoryAdapter implements OrderRepository {
                 ))
                 .collect(Collectors.toList());
         
-        Order order = Order.create(entity.getId(), orderLines);
-        
-        // Restaurar el estado del pedido
-        OrderStatus status = entity.getStatus();
-        switch (status) {
-            case CONFIRMED:
-                if (order.getStatus() == OrderStatus.CREATED) {
-                    order.confirm();
-                }
-                break;
-            case SHIPPED:
-                if (order.getStatus() == OrderStatus.CREATED) {
-                    order.confirm();
-                }
-                if (order.getStatus() == OrderStatus.CONFIRMED) {
-                    order.ship();
-                }
-                break;
-            case CANCELLED:
-                if (order.getStatus() == OrderStatus.CREATED || order.getStatus() == OrderStatus.CONFIRMED) {
-                    order.cancel();
-                }
-                break;
-        }
-        
-        return order;
+        // Reconstruir el Order directamente con el estado persistido sin ejecutar transiciones
+        OrderStatus status = OrderStatus.valueOf(entity.getStatus());
+        return Order.reconstruct(entity.getId(), orderLines, status);
     }
 }

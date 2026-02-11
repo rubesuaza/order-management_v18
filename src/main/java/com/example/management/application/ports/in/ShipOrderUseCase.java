@@ -1,6 +1,6 @@
 package com.example.management.application.ports.in;
 
-import com.example.management.domain.model.Order;
+import com.example.management.application.dtos.OrderDto;
 
 /**
  * Caso de uso para enviar un pedido.
@@ -14,5 +14,5 @@ public interface ShipOrderUseCase {
      * @return El pedido enviado
      * @throws com.example.management.domain.exception.InvalidOrderStateException si el pedido no está en estado CONFIRMED
      */
-    Order shipOrder(String orderId);
+    OrderDto shipOrder(String orderId);
 }
